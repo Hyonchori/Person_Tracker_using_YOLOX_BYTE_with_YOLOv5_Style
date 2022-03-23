@@ -4,3 +4,4 @@
 
 from .coco_evaluator import COCOEvaluator
 from .mot_evaluator import MOTEvaluator
+from .custom_evaluator import CustomCOCOEvaluator
