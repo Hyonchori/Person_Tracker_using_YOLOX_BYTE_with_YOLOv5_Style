@@ -1,9 +1,5 @@
-import os
-import sys
-from pathlib import Path
+from YOLOX.models.darknet import CSPDarknet
+from YOLOX.models.yolo_pafan import YOLOPAFPN
 
-FILE = Path(__file__).absolute()
-if os.path.join(FILE.parents[0], "yolox") not in sys.path:
-    sys.path.append(os.path.join(FILE.parents[0], "yolox"))
-from yolox.exp import get_exp as get_yolox_exp
-
+model = YOLOPAFPN()
+print(model)

@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+# Backbone of YOLOx: CSPDarknet + PAFPN
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -13,17 +12,15 @@ class YOLOPAFPN(nn.Module):
     """
     YOLOv3 model. Darknet 53 is the default backbone of this model.
     """
-
-    def __init__(
-        self,
-        depth=1.0,
-        width=1.0,
-        in_features=("dark3", "dark4", "dark5"),
-        in_channels=[256, 512, 1024],
-        depthwise=False,
-        act="silu",
-    ):
+    def __init__(self,
+                 depth: float = 1.0,
+                 width: float = 1.0,
+                 in_features: List[str] = ("dark3", "dark4", "dark5"),
+                 in_channels: List[int] = (256, 512, 1024),
+                 depthwise: bool = False,
+                 act: str = "silu"):
         super().__init__()
+        assert len(in_features) == len(in_channels) == 3, "Length of in_features and in_channels should be 3"
         self.backbone = CSPDarknet(depth, width, depthwise=depthwise, act=act)
         self.in_features = in_features
         self.in_channels = in_channels
@@ -33,14 +30,15 @@ class YOLOPAFPN(nn.Module):
         self.lateral_conv0 = BaseConv(
             int(in_channels[2] * width), int(in_channels[1] * width), 1, 1, act=act
         )
+
         self.C3_p4 = CSPLayer(
             int(2 * in_channels[1] * width),
             int(in_channels[1] * width),
             round(3 * depth),
             False,
             depthwise=depthwise,
-            act=act,
-        )  # cat
+            act=act
+        )
 
         self.reduce_conv1 = BaseConv(
             int(in_channels[1] * width), int(in_channels[0] * width), 1, 1, act=act
@@ -51,10 +49,9 @@ class YOLOPAFPN(nn.Module):
             round(3 * depth),
             False,
             depthwise=depthwise,
-            act=act,
+            act=act
         )
 
-        # bottom-up conv
         self.bu_conv2 = Conv(
             int(in_channels[0] * width), int(in_channels[0] * width), 3, 2, act=act
         )
@@ -64,10 +61,9 @@ class YOLOPAFPN(nn.Module):
             round(3 * depth),
             False,
             depthwise=depthwise,
-            act=act,
+            act=act
         )
 
-        # bottom-up conv
         self.bu_conv1 = Conv(
             int(in_channels[1] * width), int(in_channels[1] * width), 3, 2, act=act
         )
@@ -77,10 +73,10 @@ class YOLOPAFPN(nn.Module):
             round(3 * depth),
             False,
             depthwise=depthwise,
-            act=act,
+            act=act
         )
 
-    def forward(self, input):
+    def forward(self, x):
         """
         Args:
             inputs: input images.
@@ -88,9 +84,7 @@ class YOLOPAFPN(nn.Module):
         Returns:
             Tuple[Tensor]: FPN feature.
         """
-
-        #  backbone
-        out_features = self.backbone(input)
+        out_features = self.backbone(x)
         features = [out_features[f] for f in self.in_features]
         [x2, x1, x0] = features
 
