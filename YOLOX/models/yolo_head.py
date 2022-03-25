@@ -122,9 +122,8 @@ class YOLOXHead(nn.Module):
             b.data.fill_(-math.log((1 - prior_prob) / prior_prob))
             conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
 
-    def forward(self, feats, labels=None, imgs=None):
+    def forward(self, feats):
         outputs = []
-        origin_preds = []
         x_shifts = []
         y_shifts = []
         expanded_strides = []
@@ -159,6 +158,8 @@ class YOLOXHead(nn.Module):
             outputs.append(output)
 
         if self.training:
+            for o in outputs:
+                print(o.shape)
             pass
         else:
             self.hw = [x.shape[-2:] for x in outputs]
@@ -216,10 +217,11 @@ class YOLOXHead(nn.Module):
 
 if __name__ == "__main__":
     # (736, 1280)
+    # Width and height of input(image) should be a multiple of 32
     input_sample = [torch.randn((8, 256, 736 // 8, 1280 // 8)),
                     torch.randn((8, 512, 736 // 16, 1280 // 16)),
                     torch.randn((8, 1024, 736 // 32, 1280 // 32))]
     model = YOLOXHead(num_classes=5)
     #model = model.train()
-    model = model.eval()
+    #model = model.eval()
     outputss = model(input_sample)
